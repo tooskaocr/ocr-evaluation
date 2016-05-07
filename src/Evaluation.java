@@ -1,5 +1,7 @@
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,15 +9,35 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
-import ir.viratech.commons.nlp_utils.commons.StringCompare;
-
 public class Evaluation {
-//	static String[] datasets = { "simple", "medium", "difficult", "very_difficult" };
-	static String[] datasets = { "books1"};
-	static ArrayList<String> runs = new ArrayList<>();
-			
+	static String[] datasets = { "simple", "medium", "difficult"};
+//	String[] datasets = { "ganjoor"};
+	
+	ArrayList<String> normalFrom = new ArrayList<String>();
+	ArrayList<String> normalTo = new ArrayList<String>();
+	ArrayList<String> runs = new ArrayList<>();
+	
+	boolean ignoreSpaces = true;
+
 	public static void main(String[] args) throws Exception {	
-		Collections.addAll(runs, new String[] {"vira950207", "persianegar", "googledrive"});
+		new Evaluation().evaluate(new String[] {"vira950117", "persianegar", "googledrive"});
+	}
+	
+	public Evaluation() {
+		initMap();
+	}
+
+	private void initMap() {
+		normalFrom.addAll(Arrays.asList(new String[] { "\n", "\u200c", "\u06f0", "\u06f1", "\u06f2", "\u06f3", "\u06f4", "\u06f5", "\u06f6", "\u06f7", "\u06f8", "\u06f9" }));
+		normalTo.addAll(Arrays.asList(new String[] { " ", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}));
+		if (ignoreSpaces) {
+			normalFrom.add(" ");
+			normalTo.add("");
+		}
+	}
+	
+	private void evaluate(String[] inputRuns) throws Exception, IOException {
+		Collections.addAll(runs, inputRuns);
 		System.out.println("runs: " + runs);
 		for (String dataset: datasets) {
 			Map<String, RunData> runsData = new HashMap<>();
@@ -47,7 +69,8 @@ public class Evaluation {
 							String runOutput = FileUtils.readFileToString(runOutputFile, "utf8");
 							runOutput = normalize(runOutput);
 							correct = normalize(correct);
-							double score = StringCompare.similarityScore(runOutput, correct, true, 3);
+							StringCompareDetailed stringCompareDetailed = new StringCompareDetailed();
+							double score = stringCompareDetailed.runStringComparison(runOutput, correct, true, 3);
 							runData.addScore(score);
 							System.out.printf("%s %.1f%% ", runData.getName(), score*100);
 						} else {
@@ -61,7 +84,7 @@ public class Evaluation {
 			for (RunData runData: runsData.values()) {
 				double meanScore = runData.getMeanScore();
 				if (runData.getCountMissing() > 0)
-					System.out.printf("%s %.1f%% (I %d/%d) ", runData.getName(), meanScore, runData.getCount(), runData.getCountMissing()+runData.getCount());
+					System.out.printf("%s %.1f%% (Incomplete %d/%d) ", runData.getName(), meanScore, runData.getCount(), runData.getCountMissing()+runData.getCount());
 				else
 					System.out.printf("%s %.1f%% ", runData.getName(), meanScore);
 			}
@@ -69,12 +92,9 @@ public class Evaluation {
 		}
 	}
 
-	private static String[] normalFrom = new String[] { "\n", "\u200c", "\u06f0", "\u06f1", "\u06f2", "\u06f3", "\u06f4", "\u06f5", "\u06f6", "\u06f7", "\u06f8", "\u06f9" };
-	private static String[] normalTo   = new String[] { " ", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
-	
-	private static String normalize(String text) {
-		for (int i = 0; i < normalFrom.length; ++i) {
-			text = text.replaceAll(normalFrom[i], normalTo[i]);
+	private String normalize(String text) {
+		for (int i = 0; i < normalFrom.size(); ++i) {
+			text = text.replaceAll(normalFrom.get(i), normalTo.get(i));
 		}
 		return text;
 	}
