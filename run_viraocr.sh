@@ -2,8 +2,9 @@
 #path=/opt/ocr-evaluation/benchmark_data/simple/text1-bnazanin-12.png
 
 basepath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-runname=$1
-datasets=$2
+runname="$1"
+datasets="$2"
+model="$3"
 
 if [ -z $runname ]; then
 	echo "usage: run_viraocr [runname] [dataset]"
@@ -13,7 +14,7 @@ fi
 mkdir -p $basepath/runs/$runname
 
 if [ "$datasets" == "" ]; then
-	datasets="books simple medium difficult"
+	datasets="books1 books2 simple medium difficult ganjoor"
 fi
 
 for dataset in $datasets ; do
@@ -24,7 +25,8 @@ for dataset in $datasets ; do
 		mode="single_line"
 		deskew="false"
 	fi
-	if [ "$dataset" == "books" ] || [ "$dataset" == "simple" ]; then
+	#if [ "$dataset" == "books" ] || [ "$dataset" == "simple" ]; then
+	if [ "$dataset" == "simple" ]; then
 		deskew="false"
 	fi
 	for absfilepath in $basepath/benchmark_data/$dataset/*.{jpg,png,bmp,tiff} ; do
@@ -33,10 +35,12 @@ for dataset in $datasets ; do
 			basefilename="${filename%.*}"
 			if [ -e $basepath/benchmark_data/$dataset/${basefilename}.txt ]; then
 				echo Running on $absfilepath
-				if [ "$mode" == "single_line" ]; then
-					matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', 0, 0, $deskew, 'mode', '${mode}'); exit"
+				if [ "$mode" == "single_line" ] && [ "$model" != "" ]; then
+						matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', 0, 0, $deskew, 'mode', '${mode}', 'model', '$model'); exit"
+				elif [ "$mode" == "single_line" ]; then
+					matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', 0, 0, $deskew, 'mode', '${mode}'); exit" 
 				else
-					matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', false, true, $deskew); exit"
+					matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', 0, 1, $deskew, 'model', '$model'); exit"
 				fi
 				cp /opt/farsi-ocr-engine-v3/temp/$basefilename/output.txt $basepath/runs/$runname/${basefilename}.txt
 			fi
