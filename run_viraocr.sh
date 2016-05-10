@@ -3,8 +3,8 @@
 
 basepath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 runname="$1"
-datasets="$2"
-model="$3"
+model="$2"
+datasets="$3"
 
 if [ -z $runname ]; then
 	echo "usage: run_viraocr [runname] [dataset]"
@@ -19,15 +19,15 @@ fi
 
 for dataset in $datasets ; do
 	echo $dataset
-	mode=""
-	deskew="true"
+	mode="normal"
+	deskew="1"
 	if [ "$dataset" == "ganjoor" ]; then
 		mode="single_line"
-		deskew="false"
+		deskew="0"
 	fi
 	#if [ "$dataset" == "books" ] || [ "$dataset" == "simple" ]; then
 	if [ "$dataset" == "simple" ]; then
-		deskew="false"
+		deskew="0"
 	fi
 	for absfilepath in $basepath/benchmark_data/$dataset/*.{jpg,png,bmp,tiff} ; do
 		if [ -e $absfilepath ]; then
@@ -35,12 +35,18 @@ for dataset in $datasets ; do
 			basefilename="${filename%.*}"
 			if [ -e $basepath/benchmark_data/$dataset/${basefilename}.txt ]; then
 				echo Running on $absfilepath
-				if [ "$mode" == "single_line" ] && [ "$model" != "" ]; then
-						matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', 0, 0, $deskew, 'mode', '${mode}', 'model', '$model'); exit"
-				elif [ "$mode" == "single_line" ]; then
-					matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', 0, 0, $deskew, 'mode', '${mode}'); exit" 
+				if [ "$model" == "" ]; then
+					if [ "$mode" == "single_line" ]; then
+						matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; init; ocr_main_v3('$absfilepath', 0, 0, $deskew, 'mode', '${mode}'); exit" 
+					else
+						matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; init; ocr_main_v3('$absfilepath', 0, 0, $deskew); exit"
+					fi
 				else
-					matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; setup; init; ocr_main_v3('$absfilepath', 0, 1, $deskew, 'model', '$model'); exit"
+					if [ "$mode" == "single_line" ]; then
+						matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; init; ocr_main_v3('$absfilepath', 0, 0, $deskew, 'mode', '${mode}', 'model', '${model}'); exit"
+					else
+						matlab -nojvm -nodesktop -nosplash -r "cd /opt/farsi-ocr-engine-v3; init; ocr_main_v3('$absfilepath', 0, 1, $deskew, 'model', '${model}'); exit"
+					fi
 				fi
 				cp /opt/farsi-ocr-engine-v3/temp/$basefilename/output.txt $basepath/runs/$runname/${basefilename}.txt
 			fi
