@@ -10,17 +10,17 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 public class Evaluation {
-	static String[] datasets = { "simple", "medium", "difficult"};
+	static String[] datasets = {"books1", "books2", "simple", "medium", "difficult", "ganjoor"};
 //	String[] datasets = { "ganjoor"};
 	
 	ArrayList<String> normalFrom = new ArrayList<String>();
 	ArrayList<String> normalTo = new ArrayList<String>();
 	ArrayList<String> runs = new ArrayList<>();
 	
-	boolean ignoreSpaces = true;
+	boolean ignoreSpaces = false;
 
 	public static void main(String[] args) throws Exception {	
-		new Evaluation().evaluate(new String[] {"vira950117", "persianegar", "googledrive"});
+		new Evaluation().evaluate(new String[] {"googledrive", "persianegar", "vira9410", "vira950117", "vira950220-t50-180", "vira950220-t80-200", "ganjoor"});
 	}
 	
 	public Evaluation() {
@@ -56,8 +56,8 @@ public class Evaluation {
 				if (file.getName().endsWith(".txt")) {
 					String name = FilenameUtils.getBaseName(file.getName());
 					System.out.print(name + ": "); 
-					boolean available = true;
 					for (RunData runData: runsData.values()) {
+						boolean available = true;
 						String correct = FileUtils.readFileToString(file, "utf8");
 						File runOutputFile = new File(runData.getRunDir(), file.getName());
 						if (!runOutputFile.exists()) {
