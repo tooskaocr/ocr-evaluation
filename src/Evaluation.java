@@ -123,15 +123,15 @@ public class Evaluation {
 			System.out.println();
 		}
 		
-		File resultDir = new File("result/accumulated");
+		File resultDir = new File("result/accumulated/");
 		resultDir.mkdirs();
 		// Print accumulated confusion matrices for each run
 		for (RunData runData:accumulatedRunsData.values()) 
 		{
-			try(FileOutputStream fos = new FileOutputStream("result/accumulated"+runData.getName()+".scores.csv")){
+			try(FileOutputStream fos = new FileOutputStream("result/accumulated/"+runData.getName()+".scores.csv")){
 				runData.writeScoresCSV(fos);
 			}
-			try(FileOutputStream fos = new FileOutputStream("result/accumulated"+runData.getName()+".confusion.csv")){
+			try(FileOutputStream fos = new FileOutputStream("result/accumulated/"+runData.getName()+".confusion.csv")){
 				runData.writeMatrixCSV(fos, false);
 			}
 		}
