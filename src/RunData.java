@@ -1,4 +1,9 @@
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+import ir.viratech.commons.nlp_utils.commons.helper.ConfusionMatrix;
 
 public class RunData {
 	private File runDir;
@@ -10,10 +15,17 @@ public class RunData {
 	private double sumScore = 0;
 	private int count = 0;
 	private int countMissing = 0;
-
+	private ConfusionMatrix misspelledMatrix;
+	private ArrayList<String> runNames;
+	private ArrayList<Double> runScores;
+	
 	public RunData(File runDir) {
 		this.setRunDir(runDir);
 		name = runDir.getName();
+		misspelledMatrix = new ConfusionMatrix();
+
+		runNames = new ArrayList<>();
+		runScores = new ArrayList<>();
 	}
 	public File getRunDir() {
 		return runDir;
@@ -30,6 +42,73 @@ public class RunData {
 	public void addScore(double score) {
 		sumScore += score;
 		setCount(getCount() + 1);
+	}
+	
+	public void addRunScore(double runScore, String runName) {
+		runNames.add(runName);
+		runScores.add(runScore);
+	}
+	
+	public void addMatrix(ConfusionMatrix matrix) {
+		misspelledMatrix.addMatrix(matrix);
+	}
+	
+	public void writeScoresCSV(OutputStream output) throws IOException
+	{
+		StringBuilder result = new StringBuilder();
+		for(int i = 0; i < runNames.size(); i++) {
+			if(i != 0)
+				result.append(",");
+			result.append(runNames.get(i));
+		}
+		result.append("\n");
+		output.write(result.toString().getBytes());
+		
+		result = new StringBuilder();
+		for(int i = 0; i < runScores.size(); i++) {
+			if(i != 0)
+				result.append(",");
+			result.append(String.format("%.4f", runScores.get(i)));
+		}
+		result.append("\n");
+		output.write(result.toString().getBytes());
+	}
+	
+	public void writeMatrixCSV(OutputStream output, boolean includeMatches) throws IOException
+	{
+		int[][] content = misspelledMatrix.getContent();
+		char[] chars = misspelledMatrix.getLabels();
+		
+		StringBuilder result = new StringBuilder();
+
+		int nChars = chars.length;		
+		
+		result.append("<>,");
+		for(int i = 0;i < nChars;i++)
+			result.append(String.format("\\u%04x", (int)chars[i])+",");
+		result.append("del\n");
+		output.write(result.toString().getBytes());
+		
+		for(int i = 0;i < nChars+1;i++)
+		{
+			result = new StringBuilder();
+			double rowSum = misspelledMatrix.sumOfOneRow(i, includeMatches);
+			if(i < nChars)
+				result.append(String.format("\\u%04x", (int)chars[i]));
+			else
+				result.append("ins");
+			for(int j = 0;j < nChars+1;j++)
+			{
+				if((!includeMatches || rowSum == 0) && i == j)
+					result.append(","+String.format("%.4f", 1.0));
+				else if(rowSum > 0)
+					result.append(","+String.format("%.4f", (content[i][j]/rowSum)));
+				else
+					result.append(","+String.format("%.4f", 0.0));
+			}
+			result.append("\n");
+			output.write(result.toString().getBytes());
+		}	
 	}
 	public String getIncompleteName() {
 		return incompleteName;
