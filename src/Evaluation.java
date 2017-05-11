@@ -49,7 +49,6 @@ public class Evaluation {
 		for (String dataset: datasets) {
 			Map<String, RunData> runsData = new HashMap<>();
 			File[] runDirs = new File("runs").listFiles();
-			Arrays.sort(runDirs);
 			for (File runDir: runDirs) {
 				if (runs.contains(runDir.getName()))
 				{

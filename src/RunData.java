@@ -1,7 +1,8 @@
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
 
 import ir.viratech.commons.nlp_utils.commons.helper.ConfusionMatrix;
 
@@ -16,16 +17,14 @@ public class RunData {
 	private int count = 0;
 	private int countMissing = 0;
 	private ConfusionMatrix misspelledMatrix;
-	private ArrayList<String> runNames;
-	private ArrayList<Double> runScores;
+	private Map<String, Double> runValues;
 	
 	public RunData(File runDir) {
 		this.setRunDir(runDir);
 		name = runDir.getName();
 		misspelledMatrix = new ConfusionMatrix();
 
-		runNames = new ArrayList<>();
-		runScores = new ArrayList<>();
+		runValues = new TreeMap<>();
 	}
 	public File getRunDir() {
 		return runDir;
@@ -45,8 +44,7 @@ public class RunData {
 	}
 	
 	public void addRunScore(double runScore, String runName) {
-		runNames.add(runName);
-		runScores.add(runScore);
+		runValues.put(runName, runScore);
 	}
 	
 	public void addMatrix(ConfusionMatrix matrix) {
@@ -56,19 +54,21 @@ public class RunData {
 	public void writeScoresCSV(OutputStream output) throws IOException
 	{
 		StringBuilder result = new StringBuilder();
-		for(int i = 0; i < runNames.size(); i++) {
-			if(i != 0)
+		int cnt = 0;
+		for(String runName: runValues.keySet()) {
+			if(cnt++ != 0)
 				result.append(",");
-			result.append(runNames.get(i));
+			result.append(runName);
 		}
 		result.append("\n");
 		output.write(result.toString().getBytes());
 		
 		result = new StringBuilder();
-		for(int i = 0; i < runScores.size(); i++) {
-			if(i != 0)
+		cnt = 0;
+		for(Double runScore: runValues.values()) {
+			if(cnt++ != 0)
 				result.append(",");
-			result.append(String.format("%.4f", runScores.get(i)));
+			result.append(String.format("%.4f", runScore));
 		}
 		result.append("\n");
 		output.write(result.toString().getBytes());
